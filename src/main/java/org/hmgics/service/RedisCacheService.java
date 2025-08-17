@@ -1,7 +1,10 @@
 package org.hmgics.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.RequiredArgsConstructor;
 import org.hmgics.model.MotorNotification;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.Cursor;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -12,18 +15,14 @@ import org.springframework.stereotype.Service;
 import java.time.Instant;
 import java.util.*;
 
+@RequiredArgsConstructor
 @Service
 public class RedisCacheService {
 
+    private static final Logger logger = LoggerFactory.getLogger(RedisCacheService.class);
     private final Jackson2HashMapper mapper = new Jackson2HashMapper(false); // no flatten
     private final RedisTemplate<String, MotorNotification> redisTemplate;
-
-    @Autowired
-    private ObjectMapper om;
-
-    public RedisCacheService(RedisTemplate<String, MotorNotification> redisTemplate) {
-        this.redisTemplate = redisTemplate;
-    }
+    private final ObjectMapper om;
 
     /**
      * Find the key that has a certain pattern from Redis
@@ -54,7 +53,7 @@ public class RedisCacheService {
     }
 
     public void upsert(MotorNotification m) {
-        System.out.println("hash value ser: {}" + redisTemplate.getHashValueSerializer().getClass());
+        logger.info("Hash value ser: {}", redisTemplate.getHashValueSerializer().getClass());
 
         String key = m.getSensorType().toString() + "-motor:" + m.getMotorId();
         Map<String, Object> map = new HashMap<>();

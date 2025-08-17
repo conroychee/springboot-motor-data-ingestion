@@ -1,21 +1,15 @@
 package org.hmgics.model;
 
-//import jakarta.persistence.Entity;
-//import jakarta.persistence.Id;
-import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonAlias;
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.PastOrPresent;
 import lombok.Data;
-
 import jakarta.validation.constraints.NotNull;
-import org.springframework.data.annotation.Id;
-import org.springframework.data.redis.core.RedisHash;
-
 import java.time.Instant;
 
-//@Entity
+
 @Data
-//@RedisHash
 public class MotorNotification {
 
     public enum SensorType {
@@ -30,10 +24,8 @@ public class MotorNotification {
         HIGH_VIBRATION
     }
 
-
-//    @Id
-//    private String id;
-
+    @Schema(name = "motor_id", example = "MTR-01") // shown as motor_id in Swagger
+    @JsonAlias("motor_id")
     @NotNull(message = "Motor ID must be valid")
     private String motorId;
 
@@ -41,19 +33,24 @@ public class MotorNotification {
     @PastOrPresent(message = "Timestamp must be in the past or present")
     private Instant timestamp;
 
+    @Schema(name = "vibration_g", example = "10") // shown as motor_id in Swagger
+    @JsonAlias("vibration_g")
     @NotNull(message = "Vibration must be valid")
     @DecimalMin(value = "0.0", inclusive = true, message = "Vibration must be >= 0.0")
-//    @JsonProperty("vibration_g")
     private Double vibrationG;
 
+    @Schema(name = "temperature_c", example = "100")
+    @JsonAlias("temperature_c")
     @NotNull(message = "Temperature must be valid")
     @DecimalMin(value = "-50.0", inclusive = true, message = "Temperature must be >= -50.0")
-//    @JsonProperty("temperature_c")
     private Double temperatureC;
 
+    @Schema(hidden = true)
     private SensorType sensorType;
 
+    @Schema(hidden = true)
     private AlertType alertType;
 
+    @Schema(hidden = true)
     private Double value;
 }

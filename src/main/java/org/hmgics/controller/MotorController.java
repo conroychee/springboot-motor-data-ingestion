@@ -2,6 +2,9 @@ package org.hmgics.controller;
 
 
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.ExampleObject;
+import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.validation.Valid;
@@ -9,29 +12,23 @@ import lombok.RequiredArgsConstructor;
 import org.hmgics.model.MotorNotification;
 import org.hmgics.service.RabMsgService;
 import org.hmgics.service.RedisCacheService;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-
-import java.util.List;
 import java.util.Optional;
 
-//@RequiredArgsConstructor
+@RequiredArgsConstructor
 @RestController
 @RequestMapping("/api")
 public class MotorController {
-//    @Autowired
-//    private MachineRepository repository;
 
-    @Autowired
-    private RedisCacheService redisCacheService;
-
-    @Autowired
-    private RabMsgService rabMsgService;
-
+    private static final Logger logger = LoggerFactory.getLogger(MotorController.class);
+    private final RedisCacheService redisCacheService;
+    private final RabMsgService rabMsgService;
 
     @Operation(summary = "Put an alert details", description = "Receive the machine details." +
             "When the sensor value reaches threshold, it will publish to Rabbit MQ queue")
@@ -43,7 +40,7 @@ public class MotorController {
     public ResponseEntity<MotorNotification> create(@Valid @RequestBody
                                                     MotorNotification motorNotification) {
         String motorId = motorNotification.getMotorId();
-        System.out.println("received={}, serverNow={}" + motorNotification.getTimestamp() +" ---" + java.time.Instant.now());
+        logger.info ("Received motor notification: {}", motorNotification);
         if (motorNotification.getVibrationG() > 2.5) {
             motorNotification.setValue(motorNotification.getVibrationG());
             motorNotification.setSensorType(MotorNotification.SensorType.VIBRATION_SENSOR);
@@ -56,12 +53,8 @@ public class MotorController {
         }
         else{
             Optional<String> matchedKey = redisCacheService.findMatchedKey("VIBRATION_SENSOR-motor:"+motorId);
-            System.out.println("Temperature -- " + matchedKey);
+            logger.info("Found matched key: {} for motor id: {} that has been recovered from vibration issue",  matchedKey, motorId);
             matchedKey.ifPresent(redisCacheService::deleteMatchedKey);
-
-
-
-
         }
         if (motorNotification.getTemperatureC() > 80) {
             motorNotification.setValue(motorNotification.getTemperatureC());
@@ -76,12 +69,10 @@ public class MotorController {
         }
         else{
             Optional<String> matchedKey  = redisCacheService.findMatchedKey("TEMPERATURE_SENSOR-motor:"+motorId);
-            System.out.println("Temperature -- " + matchedKey);
+            logger.info("Found matched key: {} for motor id: {} that has been recovered from temperature issue",  matchedKey, motorId);
             matchedKey.ifPresent(redisCacheService::deleteMatchedKey);
         }
-
         return ResponseEntity.ok(motorNotification);
-        //return repository.save(machine);
     }
 }
 

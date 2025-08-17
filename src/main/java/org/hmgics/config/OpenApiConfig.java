@@ -10,6 +10,7 @@ public class OpenApiConfig {
     @Bean
     public OpenAPI apiInfo() {
         return new OpenAPI()
-                .info(new Info().title("HMGICS Motor Data Ingestion").version("v1").description("Demo service"));
+                .info(new Info().title("HMGICS Motor Data Ingestion").version("v1")
+                        .description("Motor data ingestion"));
     }
 }
